@@ -9,9 +9,11 @@ import com.lezurex.gpstracer.domain.dao.PointDao
 import com.lezurex.gpstracer.util.LocationPermissionHelper
 import com.mapbox.geojson.Feature
 import com.mapbox.geojson.FeatureCollection
+import com.mapbox.geojson.LineString
 import com.mapbox.geojson.Point
 import com.mapbox.maps.MapView
 import com.mapbox.maps.extension.style.layers.addLayer
+import com.mapbox.maps.extension.style.layers.generated.LineLayer
 import com.mapbox.maps.extension.style.layers.generated.SymbolLayer
 import com.mapbox.maps.extension.style.sources.addSource
 import com.mapbox.maps.extension.style.sources.generated.GeoJsonSource
@@ -71,10 +73,16 @@ class MainActivity : AppCompatActivity() {
 
     private fun addPointsToMap(points: List<com.lezurex.gpstracer.domain.entity.Point>) {
         val featureList = mutableListOf<Feature>()
+        val pointList = mutableListOf<Point>()
+
         for (point in points) {
             featureList.add(Feature.fromGeometry(Point.fromLngLat(point.lon, point.lat)))
+            pointList.add(Point.fromLngLat(point.lon, point.lat))
         }
+        val lineString = LineString.fromLngLats(pointList)
+
         geoJsonSource.featureCollection(FeatureCollection.fromFeatures(featureList))
+        geoJsonSource.geometry(lineString)
     }
 
     private fun addPointsLayer() {
@@ -83,11 +91,17 @@ class MainActivity : AppCompatActivity() {
         mapView.getMapboxMap().getStyle { style ->
             style.addSource(geoJsonSource)
 
-            val layer = SymbolLayer("point-layer", "point-source")
-            layer.iconImage("border-dot-13")
-            layer.iconColor("red")
-            layer.iconSize(2.0)
-            style.addLayer(layer)
+            val lineLayer = LineLayer("line-layer", "point-source")
+            lineLayer.lineColor("red")
+            lineLayer.lineWidth(4.0)
+            lineLayer.sourceLayer("point-layer")
+            style.addLayer(lineLayer)
+
+            val pointsLayer = SymbolLayer("point-layer", "point-source")
+            pointsLayer.iconImage("border-dot-13")
+            pointsLayer.iconColor("red")
+            pointsLayer.iconSize(2.0)
+            style.addLayer(pointsLayer)
         }
     }
 
