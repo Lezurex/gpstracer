@@ -45,10 +45,6 @@ class MainActivity : AppCompatActivity() {
 
         val intent = Intent(applicationContext, LocationService::class.java)
         startService(intent)
-
-        pointsLiveData.observe(this) { points ->
-            addPointsToMap(points)
-        }
     }
 
     override fun onDestroy() {
@@ -62,13 +58,15 @@ class MainActivity : AppCompatActivity() {
                 enabled = true
                 pulsingEnabled = true
             }
+            addPointsLayer()
+            updateMapWithLatestPoints()
         }
-        addPointsLayer()
-        updateMapWithLatestPoints()
     }
 
     private fun updateMapWithLatestPoints() {
-
+        pointsLiveData.observe(this) { points ->
+            addPointsToMap(points)
+        }
     }
 
     private fun addPointsToMap(points: List<com.lezurex.gpstracer.domain.entity.Point>) {
