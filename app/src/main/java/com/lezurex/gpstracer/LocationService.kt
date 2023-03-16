@@ -10,10 +10,8 @@ import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.IBinder
-import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
-import androidx.room.Room
 import com.lezurex.gpstracer.domain.AppDatabase
 import com.lezurex.gpstracer.domain.dao.PointDao
 import com.lezurex.gpstracer.domain.entity.Point
@@ -35,7 +33,7 @@ class LocationService : Service(), LocationListener {
         super.onCreate()
 
         locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        db = Room.databaseBuilder(applicationContext, AppDatabase::class.java, "gpstracer").build()
+        db = AppDatabase.getDatabase(applicationContext)
         pointDao = db.pointDao()
 
         if (ActivityCompat.checkSelfPermission(
@@ -45,7 +43,6 @@ class LocationService : Service(), LocationListener {
             locationManager.requestLocationUpdates(
                 LocationManager.GPS_PROVIDER, 1000 * 30, 0f, this
             )
-            Log.i("LocationService", "LocationService started")
         }
     }
 
@@ -66,7 +63,6 @@ class LocationService : Service(), LocationListener {
             LocalDateTime.now(), location.longitude, location.latitude, location.accuracy.toDouble()
         )
         locationServiceScope.launch { pointDao.insertAll(point) }
-        Log.i("LocationService", point.toString())
     }
 
     private fun createNotification(): Notification {

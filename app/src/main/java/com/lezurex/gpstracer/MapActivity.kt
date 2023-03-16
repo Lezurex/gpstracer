@@ -2,9 +2,8 @@ package com.lezurex.gpstracer
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
-import androidx.room.Room
+import androidx.lifecycle.LiveData
 import com.lezurex.gpstracer.domain.AppDatabase
 import com.lezurex.gpstracer.domain.dao.PointDao
 import com.lezurex.gpstracer.util.LocationPermissionHelper
@@ -17,7 +16,6 @@ import com.mapbox.maps.extension.style.layers.generated.SymbolLayer
 import com.mapbox.maps.extension.style.sources.addSource
 import com.mapbox.maps.extension.style.sources.generated.GeoJsonSource
 import com.mapbox.maps.plugin.locationcomponent.location
-import kotlinx.coroutines.*
 import java.lang.ref.WeakReference
 
 class MainActivity : AppCompatActivity() {
@@ -25,14 +23,17 @@ class MainActivity : AppCompatActivity() {
     private lateinit var locationPermissionHelper: LocationPermissionHelper
     private lateinit var mapView: MapView
     private lateinit var pointDao: PointDao
+    private lateinit var geoJsonSource: GeoJsonSource
 
-    private val mapActivityScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private val pointsLiveData: LiveData<List<com.lezurex.gpstracer.domain.entity.Point>> by lazy {
+        pointDao.getAll()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_map)
 
-        val db = Room.databaseBuilder(applicationContext, AppDatabase::class.java, "gpstracer").build()
+        val db = AppDatabase.getDatabase(applicationContext)
         pointDao = db.pointDao()
 
         mapView = findViewById(R.id.mapView)
@@ -44,6 +45,15 @@ class MainActivity : AppCompatActivity() {
 
         val intent = Intent(applicationContext, LocationService::class.java)
         startService(intent)
+
+        pointsLiveData.observe(this) { points ->
+            addPointsToMap(points)
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        pointsLiveData.removeObservers(this)
     }
 
     private fun onMapReady() {
@@ -53,28 +63,24 @@ class MainActivity : AppCompatActivity() {
                 pulsingEnabled = true
             }
         }
-        loadPoints()
+        addPointsLayer()
+        updateMapWithLatestPoints()
     }
 
-    private fun loadPoints() = mapActivityScope.launch {
-        val points = withContext(Dispatchers.IO) { pointDao.getAll() }
-        Log.i("MapActivity", points.toString())
+    private fun updateMapWithLatestPoints() {
 
-        withContext(Dispatchers.Main) {
-            addPointsToMap(points)
-        }
     }
 
     private fun addPointsToMap(points: List<com.lezurex.gpstracer.domain.entity.Point>) {
-        val featureCollection = FeatureCollection.fromFeatures(points.map { point ->
-            Feature.fromGeometry(Point.fromLngLat(point.lon, point.lat))
-        })
+        val featureList = mutableListOf<Feature>()
+        for (point in points) {
+            featureList.add(Feature.fromGeometry(Point.fromLngLat(point.lon, point.lat)))
+        }
+        geoJsonSource.featureCollection(FeatureCollection.fromFeatures(featureList))
+    }
 
-        Log.i("MapActivity", featureCollection.toString())
-
-        val geoJsonSource = GeoJsonSource.Builder("point-source")
-            .featureCollection(featureCollection)
-            .build()
+    private fun addPointsLayer() {
+        geoJsonSource = GeoJsonSource.Builder("point-source").build()
 
         mapView.getMapboxMap().getStyle { style ->
             style.addSource(geoJsonSource)
