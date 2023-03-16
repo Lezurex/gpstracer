@@ -1,5 +1,6 @@
 package com.lezurex.gpstracer
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.lezurex.gpstracer.util.LocationPermissionHelper
@@ -22,6 +23,9 @@ class MainActivity : AppCompatActivity() {
         locationPermissionHelper.checkPermissions {
             onMapReady()
         }
+
+        val intent = Intent(applicationContext, LocationService::class.java)
+        startService(intent)
     }
 
     private fun onMapReady() {
