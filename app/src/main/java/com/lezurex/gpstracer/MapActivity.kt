@@ -1,5 +1,6 @@
 package com.lezurex.gpstracer
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
@@ -33,6 +34,12 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val prefs = getSharedPreferences("gpstracer", Context.MODE_PRIVATE);
+        if (!prefs.contains("firstUse")) {
+            val intent = Intent(this, WelcomeActivity::class.java)
+            startActivity(intent);
+        }
+
         setContentView(R.layout.activity_map)
 
         val db = AppDatabase.getDatabase(applicationContext)
