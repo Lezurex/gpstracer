@@ -6,6 +6,10 @@ import com.mapbox.android.core.permissions.PermissionsListener
 import com.mapbox.android.core.permissions.PermissionsManager
 import java.lang.ref.WeakReference
 
+/**
+ * The LocationPermissionHelper is taken from an official Mapbox example.
+ * https://github.com/mapbox/mapbox-maps-android/blob/b35837b8e7c85df8c5476056f065d38ea56d55a0/app/src/main/java/com/mapbox/maps/testapp/utils/LocationPermissionHelper.kt
+ */
 class LocationPermissionHelper(val activity: WeakReference<Activity>) {
     private lateinit var permissionsManager: PermissionsManager
 
