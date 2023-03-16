@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SwitchCompat
 import androidx.lifecycle.LiveData
 import com.lezurex.gpstracer.domain.AppDatabase
 import com.lezurex.gpstracer.domain.dao.PointDao
@@ -21,7 +22,7 @@ import com.mapbox.maps.extension.style.sources.generated.GeoJsonSource
 import com.mapbox.maps.plugin.locationcomponent.location
 import java.lang.ref.WeakReference
 
-class MainActivity : AppCompatActivity() {
+class MapActivity : AppCompatActivity() {
 
     private lateinit var locationPermissionHelper: LocationPermissionHelper
     private lateinit var mapView: MapView
@@ -34,13 +35,26 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val prefs = getSharedPreferences("gpstracer", Context.MODE_PRIVATE);
-        if (!prefs.contains("firstUse")) {
+        val prefs = getSharedPreferences("gpstracer", Context.MODE_PRIVATE)
+        if (!prefs.contains("setupComplete")) {
             val intent = Intent(this, WelcomeActivity::class.java)
-            startActivity(intent);
+            startActivity(intent)
+            return
         }
 
         setContentView(R.layout.activity_map)
+
+        val switch = findViewById<SwitchCompat>(R.id.activeSwitch)
+        switch.isChecked = prefs.getBoolean("trackingActive", false)
+        switch.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                val intent = Intent(applicationContext, LocationService::class.java)
+                startService(intent)
+            } else {
+                val intent = Intent(applicationContext, LocationService::class.java)
+                stopService(intent)
+            }
+        }
 
         val db = AppDatabase.getDatabase(applicationContext)
         pointDao = db.pointDao()
@@ -52,8 +66,10 @@ class MainActivity : AppCompatActivity() {
             onMapReady()
         }
 
-        val intent = Intent(applicationContext, LocationService::class.java)
-        startService(intent)
+        if (prefs.getBoolean("trackingActive", false)) {
+            val intent = Intent(applicationContext, LocationService::class.java)
+            startService(intent)
+        }
     }
 
     override fun onDestroy() {
