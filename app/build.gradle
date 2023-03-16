@@ -39,6 +39,8 @@ dependencies {
     ksp "androidx.room:room-compiler:$room_version"
 
     implementation 'com.mapbox.maps:android:10.11.2'
+    implementation 'com.mapbox.mapboxsdk:mapbox-sdk-turf:5.8.0'
+    implementation 'com.mapbox.mapboxsdk:mapbox-sdk-geojson:6.9.0'
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.8.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'

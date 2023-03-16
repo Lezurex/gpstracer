@@ -43,8 +43,9 @@ class LocationService : Service(), LocationListener {
             ) == PackageManager.PERMISSION_GRANTED
         ) {
             locationManager.requestLocationUpdates(
-                LocationManager.GPS_PROVIDER, 1000 * 10, 0f, this
+                LocationManager.GPS_PROVIDER, 1000 * 30, 0f, this
             )
+            Log.i("LocationService", "LocationService started")
         }
     }
 
@@ -61,11 +62,11 @@ class LocationService : Service(), LocationListener {
     }
 
     override fun onLocationChanged(location: Location) {
-        var point = Point(
+        val point = Point(
             LocalDateTime.now(), location.longitude, location.latitude, location.accuracy.toDouble()
         )
         locationServiceScope.launch { pointDao.insertAll(point) }
-        Log.i("sus", point.toString())
+        Log.i("LocationService", point.toString())
     }
 
     private fun createNotification(): Notification {
