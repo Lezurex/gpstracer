@@ -47,6 +47,7 @@ class MapActivity : AppCompatActivity() {
         val switch = findViewById<SwitchCompat>(R.id.activeSwitch)
         switch.isChecked = prefs.getBoolean("trackingActive", false)
         switch.setOnCheckedChangeListener { _, isChecked ->
+            prefs.edit().putBoolean("trackingActive", isChecked).apply()
             if (isChecked) {
                 val intent = Intent(applicationContext, LocationService::class.java)
                 startService(intent)
